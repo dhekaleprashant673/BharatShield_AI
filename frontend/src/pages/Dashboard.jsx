@@ -6,6 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlowingChart from '../components/GlowingChart';
 import { downloadCsv } from '../utils/export';
+import { getAlertsPaginated } from '../utils/api';
 
 // â”€â”€ Chart datasets â€” {x, y, label} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CHART_DATA = {
@@ -48,13 +49,7 @@ const DASHBOARD_STATS = [
   { label: "Critical Alerts", value: "156", trend: "-2.1%", subtext: "Needs action", icon: AlertTriangle, gradient: "bg-rose-500" },
   { label: "Policies Scanned", value: "89.4k", trend: "+1.2%", subtext: "Active today", icon: Fingerprint, gradient: "bg-amber-500" },
 ];
-const liveFeed = [
-  { id: 1, text: 'Critical claim flagged â€” $42k submission', time: 'Just now', type: 'critical' },
-  { id: 2, text: 'Identity mismatch on Policy #A89', time: '2 min ago', type: 'warning' },
-  { id: 3, text: '14 claims verified successfully', time: '5 min ago', type: 'success' },
-  { id: 4, text: 'Geo-anomaly detected on mobile login', time: '12 min ago', type: 'warning' },
-  { id: 5, text: 'New batch of 220 claims ingested', time: '18 min ago', type: 'info' },
-];
+// Real alerts now fetched in component
 
 const StatCard = ({ title, value, subtext, trend, icon: Icon, gradient, delay }) => (
   <motion.div
@@ -101,6 +96,27 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState('week');
+  const [liveFeed, setLiveFeed] = useState([]);
+  
+  useEffect(() => {
+    const fetchLiveFeed = async () => {
+      try {
+        const data = await getAlertsPaginated(0, 5);
+        if (data.alerts) {
+           const mapped = data.alerts.map(a => ({
+             id: a.id,
+             text: `${a.fraud_type} - ${a.policy_holder}`,
+             time: 'Recently Flagged',
+             type: a.risk_score > 80 ? 'critical' : (a.risk_score > 50 ? 'warning' : 'info')
+           }));
+           setLiveFeed(mapped);
+        }
+      } catch (err) {
+        console.error("Dashboard feed fetch failed:", err);
+      }
+    };
+    fetchLiveFeed();
+  }, []);
   const chartDataA = CHART_DATA[chartPeriod].safe;
   const chartDataB = CHART_DATA[chartPeriod].fraud;
 

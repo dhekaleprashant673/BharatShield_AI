@@ -26,6 +26,7 @@ export const apiEndpoints = {
 
   // Document verification
   verifyDocument: '/verify-document',
+  analyzeDocumentComprehensive: '/api/v1/analyze-document-comprehensive',
 };
 
 // Fraud detection functions
@@ -129,6 +130,58 @@ export const verifyDocument = async (imagePath, referencePath = null) => {
     return response.data;
   } catch (error) {
     console.error('Error verifying document:', error);
+    throw error;
+  }
+};
+
+export const analyzeDocumentComprehensive = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(apiEndpoints.analyzeDocumentComprehensive, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error analyzing document comprehensively:', error);
+    throw error;
+  }
+};
+
+export const aiContentScan = async (payload) => {
+  try {
+    const response = await api.post('/api/v1/ai-content-scan', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error scanning AI content:', error);
+    throw error;
+  }
+};
+
+export const aiContentScanFile = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/v1/ai-content-scan-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error scanning forensic file:', error);
+    throw error;
+  }
+};
+
+export const getForensicReport = async (claimId) => {
+  try {
+    const response = await api.get(`/api/v1/forensic-report/${claimId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching forensic report:', error);
     throw error;
   }
 };

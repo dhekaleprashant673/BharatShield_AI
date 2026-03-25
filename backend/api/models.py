@@ -151,3 +151,24 @@ class ClaimRecord(models.Model):
 
     class Meta:
         db_table = 'claim_records'
+class FraudAnalysis(models.Model):
+    """Stores full report from FraudLens Multi-Agent System"""
+    id = models.CharField(max_length=100, primary_key=True)
+    claim_id = models.CharField(max_length=100, db_index=True)
+    fraud_score = models.IntegerField(default=0)
+    risk_level = models.CharField(max_length=50, default='low')
+    recommendation = models.TextField(null=True, blank=True)
+    
+    # Store full JSON result
+    full_report_json = models.TextField(null=True, blank=True)
+    
+    # Individual agent scores (optional but good for DB queries)
+    inconsistency_score = models.IntegerField(default=0)
+    deepfake_score = models.IntegerField(default=0)
+    pattern_score = models.IntegerField(default=0)
+    metadata_score = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'fraud_analysis_reports'

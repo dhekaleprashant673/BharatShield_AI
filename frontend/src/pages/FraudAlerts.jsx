@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Search, Filter, AlertCircle, AlertTriangle, Eye, ShieldCheck, MoreVertical, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAlertsPaginated, resolveAlert } from '../utils/api';
+import { getAlertsPaginated, resolveAlert, getForensicReport } from '../utils/api';
 
 const RiskBadge = ({ score }) => {
   if (score >= 90) return (
@@ -39,6 +39,7 @@ const StatusPill = ({ status }) => {
 export default function FraudAlerts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [reportModal, setReportModal] = useState({ open: false, data: null, loading: false });
   
   const [alerts, setAlerts] = useState([]);
   const [total, setTotal] = useState(0);
@@ -69,6 +70,17 @@ export default function FraudAlerts() {
       fetchData();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const openForensicReport = async (claimId) => {
+    setReportModal({ open: true, data: null, loading: true });
+    try {
+      const data = await getForensicReport(claimId);
+      setReportModal({ open: true, data, loading: false });
+    } catch (error) {
+       console.error("Forensic report not available:", error);
+       setReportModal({ open: true, data: { error: "Forensic report not available for this record." }, loading: false });
     }
   };
 
@@ -217,14 +229,14 @@ export default function FraudAlerts() {
                         {hoveredRow === alert.id ? (
                           <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} className="flex justify-end gap-1">
                             <button 
-                              onClick={(e) => { e.stopPropagation(); window.alert(`Investigating details for Alert ${alert.id}\nFraud Type: ${alert.fraud_type}\nScore: ${alert.risk_score}`); }}
-                              className="p-2 rounded-lg text-orange-500 hover:text-orange-300 transition-colors cursor-pointer" title="Investigate"
+                              onClick={(e) => { e.stopPropagation(); openForensicReport(alert.claim_id); }}
+                              className="p-2 rounded-lg text-orange-500 hover:text-orange-400 transition-colors cursor-pointer" title="Forensic Insights"
                               style={{ background: 'rgba(245,85,15,0.12)' }}>
-                              <Eye className="w-4 h-4 pointer-events-none" />
+                              <Sparkles className="w-4 h-4 pointer-events-none" />
                             </button>
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleResolve(alert.id); }}
-                              className="p-2 rounded-lg text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer" title="Mark Safe"
+                              className="p-2 rounded-lg text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer" title="Resolve"
                               style={{ background: 'rgba(16,185,129,0.12)' }}>
                               <ShieldCheck className="w-4 h-4 pointer-events-none" />
                             </button>
@@ -261,6 +273,97 @@ export default function FraudAlerts() {
           </div>
         </div>
       </motion.div>
+
+      {/* Forensic Report Modal */}
+      <AnimatePresence>
+        {reportModal.open && (
+           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+             onClick={() => setReportModal({ open: false, data: null, loading: false })}>
+             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+               className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 space-y-8"
+               style={{ background: '#0d0907', border: '1px solid rgba(245,85,15,0.2)' }}
+               onClick={(e) => e.stopPropagation()}>
+               
+               {reportModal.loading ? (
+                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                    <p className="text-sm font-bold text-orange-500 uppercase tracking-widest">Retrieving Forensic Data...</p>
+                 </div>
+               ) : reportModal.data?.error ? (
+                  <div className="text-center py-12">
+                     <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4 opacity-20" />
+                     <p className="text-lg font-bold text-[color:var(--text-main)]">{reportModal.data.error}</p>
+                     <button onClick={() => setReportModal({ open: false, data: null, loading: false })} className="mt-6 text-sm text-orange-500 font-bold hover:underline">Close Window</button>
+                  </div>
+               ) : (
+                 <>
+                   <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                      <div>
+                        <h2 className="text-3xl font-black text-[color:var(--text-main)] mb-1">
+                          Forensic <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(90deg, #f5550f, #ff8a50)' }}>Insight</span> Report
+                        </h2>
+                        <p className="text-sm font-medium text-slate-500">Record ID: {reportModal.data.id} â€¢ Claim: {reportModal.data.claim_id}</p>
+                      </div>
+                      <div className="text-right">
+                         <div className="text-xs font-black text-rose-500 uppercase mb-1">Risk Severity</div>
+                         <div className="text-4xl font-black text-[color:var(--text-main)]">{reportModal.data.fraud_score}<span className="text-lg text-rose-500">%</span></div>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Inconsistency', score: reportModal.data.agent_scores.inconsistency, color: '#f59e0b' },
+                        { label: 'Deepfake', score: reportModal.data.agent_scores.deepfake, color: '#f43f5e' },
+                        { label: 'Pattern Match', score: reportModal.data.agent_scores.pattern, color: '#3b82f6' },
+                        { label: 'Metadata', score: reportModal.data.agent_scores.metadata, color: '#10b981' }
+                      ].map(agent => (
+                        <div key={agent.label} className="p-4 rounded-2xl bg-white/2 border border-white/5 space-y-2">
+                           <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{agent.label}</p>
+                           <div className="flex items-end justify-between">
+                              <span className="text-xl font-black text-[color:var(--text-main)]">{agent.score}</span>
+                              <div className="w-16 h-1 rounded-full bg-black/40 overflow-hidden mb-1">
+                                 <div className="h-full rounded-full" style={{ width: `${agent.score}%`, background: agent.color }} />
+                              </div>
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+
+                   <div className="p-6 rounded-2xl bg-orange-600/5 border border-orange-600/10">
+                      <h4 className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4" /> Final Agent Recommendation
+                      </h4>
+                      <p className="text-sm font-medium text-[color:var(--text-main)] leading-relaxed italic">
+                        "{reportModal.data.recommendation || 'No specific automated recommendation provided.'}"
+                      </p>
+                   </div>
+
+                   <div className="space-y-4">
+                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Multi-Agent Evidence Log</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                         {reportModal.data.full_report?.narrative && (
+                           <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+                              <p className="text-xs text-[color:var(--text-muted)] leading-relaxed whitespace-pre-wrap">
+                                {reportModal.data.full_report.narrative}
+                              </p>
+                           </div>
+                         )}
+                      </div>
+                   </div>
+
+                   <div className="flex justify-end pt-4">
+                      <button onClick={() => setReportModal({ open: false, data: null, loading: false })}
+                        className="px-8 py-3 rounded-xl bg-white/5 text-sm font-bold text-white hover:bg-white/10 transition-all border border-white/10">
+                        Dismiss Report
+                      </button>
+                   </div>
+                 </>
+               )}
+             </motion.div>
+           </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

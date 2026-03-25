@@ -6,7 +6,7 @@ import {
   ShieldCheck, Calendar, DollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getClaims, predictFraud, detectAnomaly, generateMockClaims, verifyDocument, createClaim } from '../utils/api';
+import { getClaims, predictFraud, detectAnomaly, generateMockClaims, verifyDocument, createClaim, analyzeDocumentComprehensive } from '../utils/api';
 
 const claimsData = [
   { id: 'CLM-1092', holder: 'John Doe', type: 'Auto Collision', amount: 15400, date: '2026-03-24', status: 'Under Review', riskScore: 94, adjuster: 'Sarah K.' },
@@ -156,16 +156,30 @@ export default function Claims() {
   const handleSubmitClaim = async () => {
     try {
       if (!newHolder || !newType || !newAmount) return;
-      setIsSubmitting(true);
-      await createClaim({
+      const created = await createClaim({
         policy_holder: newHolder,
         claim_type: newType,
         amount: parseFloat(newAmount)
       });
+      
+      // If a file was selected, run multi-agent analysis immediately
+      if (selectedFile && created && created.claim_id) {
+        setDocLoading(true);
+        try {
+          // Temporarily repurpose docClaimId context
+          await analyzeDocumentComprehensive(selectedFile);
+        } catch (e) {
+          console.error("Auto-analysis failed:", e);
+        } finally {
+          setDocLoading(false);
+        }
+      }
+
       setShowModal(false);
       setNewHolder('');
       setNewType('');
       setNewAmount('');
+      setSelectedFile(null);
       // Refresh to see in dashboard
       fetchClaims();
     } catch (err) {
@@ -244,6 +258,23 @@ export default function Claims() {
     } catch (error) {
       console.error('Document verification failed:', error);
       setDocResult({ error: 'Verification failed' });
+    } finally {
+      setDocLoading(false);
+    }
+  };
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [comprehensiveResult, setComprehensiveResult] = useState(null);
+
+  const handleComprehensiveAnalysis = async () => {
+    if (!selectedFile) return;
+    setDocLoading(true);
+    try {
+      const result = await analyzeDocumentComprehensive(selectedFile);
+      setComprehensiveResult(result);
+    } catch (error) {
+      console.error('Comprehensive analysis failed:', error);
+      setComprehensiveResult({ error: 'Comprehensive analysis failed' });
     } finally {
       setDocLoading(false);
     }
@@ -564,43 +595,32 @@ export default function Claims() {
                 ))}
 
                 <div className="pt-2">
-                  <label className="text-xs font-bold text-[color:var(--text-muted)] uppercase tracking-widest mb-2 block">Document Verification</label>
-                  <div className="space-y-2">
-                    <input
-                      value={docImagePath}
-                      onChange={e => setDocImagePath(e.target.value)}
-                      placeholder="Document image path (server path)"
-                      className="w-full px-4 py-3 rounded-xl text-sm font-medium text-[color:var(--text-main)] placeholder-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-600 transition-all"
-                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}
+                  <label className="text-xs font-bold text-[color:var(--text-muted)] uppercase tracking-widest mb-3 block">Document Verification</label>
+                  <div 
+                    onClick={() => document.getElementById('new-claim-upload').click()}
+                    className="flex flex-col items-center justify-center p-6 rounded-2xl border border-dashed border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 transition-all cursor-pointer group"
+                    style={{ border: '2px dashed rgba(245,85,15,0.2)' }}
+                  >
+                    <input 
+                      id="new-claim-upload"
+                      type="file" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          setSelectedFile(e.target.files[0]);
+                          setDocImagePath(e.target.files[0].name);
+                        }
+                      }} 
                     />
-                    <input
-                      value={docReferencePath}
-                      onChange={e => setDocReferencePath(e.target.value)}
-                      placeholder="Reference image path (optional)"
-                      className="w-full px-4 py-3 rounded-xl text-sm font-medium text-[color:var(--text-main)] placeholder-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-600 transition-all"
-                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}
-                    />
-                    <button
-                      onClick={handleVerifyDocument}
-                      disabled={!docImagePath || docLoading}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg,#f5550f,#ff8a50)', boxShadow: '0 6px 24px rgba(245,85,15,0.3)' }}
-                    >
-                      {docLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5" />}
-                      Verify Document
-                    </button>
-                    {docResult && !docResult.error && (
-                      <div className="text-[11px] text-[color:var(--text-muted)]">
-                        Risk: <span className="text-emerald-400 font-bold">{docResult.risk_score ?? 'N/A'}</span> ·
-                        Status: <span className="text-orange-300 font-bold">{docResult.is_fraud === null ? 'Unknown' : docResult.is_fraud ? 'Fraud' : 'Legit'}</span>
-                      </div>
-                    )}
-                    {docResult?.error && (
-                      <div className="text-[11px] text-rose-400 font-bold">{docResult.error}</div>
-                    )}
+                    <UploadCloud className="w-8 h-8 text-orange-500/40 group-hover:text-orange-500 transition-colors mb-2" />
+                    <p className="text-[11px] font-bold text-[color:var(--text-main)]">
+                      {selectedFile ? selectedFile.name : 'Upload Claim Document (Image/PDF)'}
+                    </p>
+                    <p className="text-[9px] text-slate-600 mt-1 uppercase tracking-tighter">Multi-agent analysis will trigger on save</p>
                   </div>
                 </div>
-                <div className="flex gap-3 pt-2">
+
+                <div className="flex gap-3 pt-4">
                   <button onClick={() => setShowModal(false)} className="flex-1 py-3 rounded-xl text-sm font-bold text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
                     Cancel
                   </button>
@@ -628,7 +648,11 @@ export default function Claims() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setShowDocModal(false)}
+            onClick={() => {
+              setShowDocModal(false);
+              setSelectedFile(null);
+              setComprehensiveResult(null);
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 20 }}
@@ -647,6 +671,64 @@ export default function Claims() {
                 <p className="text-xs text-[color:var(--text-muted)] mb-4">Claim: <span className="text-orange-300 font-bold">{docClaimId}</span></p>
               )}
               <div className="space-y-3 relative z-10">
+                <div className="p-4 rounded-xl border border-dashed border-orange-500/30 bg-orange-500/5 flex flex-col items-center gap-3">
+                  <UploadCloud className="w-8 h-8 text-orange-500/50" />
+                  <p className="text-xs text-[color:var(--text-muted)] text-center">Upload claim document (PDF/Image) for multi-agent AI analysis</p>
+                  <input 
+                    type="file" 
+                    onChange={e => setSelectedFile(e.target.files[0])}
+                    className="hidden" 
+                    id="doc-upload"
+                  />
+                  <label 
+                    htmlFor="doc-upload" 
+                    className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-[11px] font-bold text-orange-500 cursor-pointer hover:bg-orange-500/20 transition-all"
+                  >
+                    {selectedFile ? selectedFile.name : 'Select File'}
+                  </label>
+                </div>
+
+                <button
+                  onClick={handleComprehensiveAnalysis}
+                  disabled={!selectedFile || docLoading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg,#f5550f,#ff8a50)', boxShadow: '0 6px 24px rgba(245,85,15,0.3)' }}
+                >
+                  {docLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                  Run Multi-Agent Analysis
+                </button>
+
+                {comprehensiveResult && (
+                   <motion.div 
+                    initial={{ opacity: 0, height: 0 }} 
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-2"
+                   >
+                     <div className="flex justify-between items-center">
+                       <span className="text-[10px] font-bold uppercase text-slate-500">Fraud Score</span>
+                       <span className={`text-sm font-black ${comprehensiveResult.fraud_score > 70 ? 'text-rose-500' : comprehensiveResult.fraud_score > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                         {comprehensiveResult.fraud_score}/100
+                       </span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-[10px] font-bold uppercase text-slate-500">Risk Level</span>
+                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${comprehensiveResult.risk_level === 'critical' ? 'bg-rose-500/20 text-rose-500' : 'bg-orange-500/20 text-orange-500'}`}>
+                         {comprehensiveResult.risk_level}
+                       </span>
+                     </div>
+                     {comprehensiveResult.recommendation && (
+                       <p className="text-[11px] text-[color:var(--text-muted)] italic">
+                         "{comprehensiveResult.recommendation}"
+                       </p>
+                     )}
+                   </motion.div>
+                )}
+
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+                  <div className="relative flex justify-center"><span className="bg-[#110906] px-2 text-[10px] font-bold text-slate-700 uppercase">Or use server path</span></div>
+                </div>
+
                 <input
                   value={docImagePath}
                   onChange={e => setDocImagePath(e.target.value)}
@@ -654,33 +736,34 @@ export default function Claims() {
                   className="w-full px-4 py-3 rounded-xl text-sm font-medium text-[color:var(--text-main)] placeholder-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-600 transition-all"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}
                 />
-                <input
-                  value={docReferencePath}
-                  onChange={e => setDocReferencePath(e.target.value)}
-                  placeholder="Reference image path (optional)"
-                  className="w-full px-4 py-3 rounded-xl text-sm font-medium text-[color:var(--text-main)] placeholder-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-600 transition-all"
-                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}
-                />
+                
                 <button
                   onClick={handleVerifyDocument}
                   disabled={!docImagePath || docLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#f5550f,#ff8a50)', boxShadow: '0 6px 24px rgba(245,85,15,0.3)' }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white/70 transition-all disabled:opacity-50"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
                 >
                   {docLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5" />}
-                  Verify Now
+                  Legacy Verification
                 </button>
+                
                 {docResult && !docResult.error && (
                   <div className="text-[11px] text-[color:var(--text-muted)]">
                     Risk: <span className="text-emerald-400 font-bold">{docResult.risk_score ?? 'N/A'}</span> ·
                     Status: <span className="text-orange-300 font-bold">{docResult.is_fraud === null ? 'Unknown' : docResult.is_fraud ? 'Fraud' : 'Legit'}</span>
                   </div>
                 )}
-                {docResult?.error && (
-                  <div className="text-[11px] text-rose-400 font-bold">{docResult.error}</div>
-                )}
+                
                 <div className="flex gap-3 pt-2">
-                  <button onClick={() => setShowDocModal(false)} className="flex-1 py-3 rounded-xl text-sm font-bold text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
+                  <button 
+                    onClick={() => {
+                      setShowDocModal(false);
+                      setComprehensiveResult(null);
+                      setSelectedFile(null);
+                    }} 
+                    className="flex-1 py-3 rounded-xl text-sm font-bold text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" 
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}
+                  >
                     Close
                   </button>
                 </div>

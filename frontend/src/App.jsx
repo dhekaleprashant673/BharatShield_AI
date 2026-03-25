@@ -8,6 +8,7 @@ import Policies from './pages/Policies';
 import FraudAlerts from './pages/FraudAlerts';
 import Analytics from './pages/Analytics';
 import Users from './pages/Users';
+import DeepfakeDetection from './pages/DeepfakeDetection';
 import SplashScreen from './components/SplashScreen';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <Route path="claims" element={<Claims />} />
               <Route path="policies" element={<Policies />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="forensic" element={<DeepfakeDetection />} />
               <Route path="users" element={<Users />} />
             </Route>
           </Routes>
