@@ -36,6 +36,10 @@ try:
 except ImportError:
     HAS_FRAUDLENS = False
 
+# Kafka Producer Integration
+from kafka_config import TOPIC_CLAIM_RAW, TOPIC_DOCUMENT_UPLOADED
+from api.kafka_producer import publish_event, flush_producer
+
 app = FastAPI(title="Insurance Fraud Detection API (Django+FastAPI)")
 
 app.add_middleware(
