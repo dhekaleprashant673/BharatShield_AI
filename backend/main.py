@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Form, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Optional, Any
@@ -39,6 +43,8 @@ except ImportError:
 # Kafka Producer Integration
 from kafka_config import TOPIC_CLAIM_RAW, TOPIC_DOCUMENT_UPLOADED
 from api.kafka_producer import publish_event, flush_producer
+
+from agents.orchestrator import UnderwritingOrchestrator, UnderwritingRequest, AgentDecision
 
 app = FastAPI(title="Insurance Fraud Detection API (Django+FastAPI)")
 
@@ -1185,4 +1191,22 @@ def train_dataset(background_tasks: BackgroundTasks, file: UploadFile = File(...
 
 
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# AGENTIC AI ENDPOINTS
+# ==========================================
+
+@app.post("/api/v1/agent/evaluate", response_model=AgentDecision)
+def agent_evaluate(request: UnderwritingRequest):
+    """
+    Evaluates an underwriting request using the Agent Orchestrator.
+    Returns: Risk score, probability of fraud, automated decision, and evidence required.
+    """
+    try:
+        orchestrator = UnderwritingOrchestrator()
+        return orchestrator.evaluate(request)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

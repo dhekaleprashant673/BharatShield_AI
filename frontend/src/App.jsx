@@ -11,6 +11,7 @@ import Users from './pages/Users';
 import DeepfakeDetection from './pages/DeepfakeDetection';
 import NetworkGraph from './pages/NetworkGraph';
 import FraudLens from './pages/FraudLens';
+import AgenticUnderwriting from './pages/AgenticUnderwriting';
 import SplashScreen from './components/SplashScreen';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
               <Route path="network-graph" element={<NetworkGraph />} />
               <Route path="users" element={<Users />} />
               <Route path="fraudlens" element={<FraudLens />} />
+              <Route path="underwriting" element={<AgenticUnderwriting />} />
             </Route>
           </Routes>
         </Router>

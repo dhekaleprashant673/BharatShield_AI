@@ -393,10 +393,10 @@ export default function Users() {
 
   // Risk donut: group by risk level (Title Case from normalization above)
   const dynamicRiskData = [
-    { label: 'Low',      color: '#10b981', key: 'Low' },
-    { label: 'Medium',   color: '#f59e0b', key: 'Medium' },
-    { label: 'High',     color: '#ff8a50', key: 'High' },
-    { label: 'Critical', color: '#f43f5e', key: 'Critical' }
+    { label: 'Low',      color: '#10b981', key: 'Low' },       // Emerald
+    { label: 'Medium',   color: '#f59e0b', key: 'Medium' },    // Amber
+    { label: 'High',     color: '#f5550f', key: 'High' },      // Core Orange
+    { label: 'Critical', color: '#f43f5e', key: 'Critical' }   // Rose
   ].map(r => ({
     label: r.label,
     val: usersData.filter(u => u.risk === r.key).length,
@@ -420,70 +420,71 @@ export default function Users() {
     <div className="space-y-4 pb-14">
 
       {/* ── Top 3 Analytics Panels ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Panel 1 — Fraud by Occupation (Premium Gradient Bar Chart) */}
-        <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}>
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20 pointer-events-none" style={{ background: '#f5550f' }} />
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fraud by Occupation</h3>
-              <p className="text-[9px] text-slate-600 mt-0.5">Risk distribution per category</p>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Occupation Risk</h3>
+              <p className="text-[9px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Fraud Distribution Matrix</p>
             </div>
-            <div className="flex items-center gap-3 text-[9px] font-bold">
-              <span className="flex items-center gap-1 text-rose-400">
-                <span className="w-2 h-2 rounded-sm inline-block" style={{ background: 'linear-gradient(135deg,#f43f5e,#ff8a50)' }} />
+            <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1.5 text-rose-400">
+                <span className="w-2.5 h-2.5 rounded-sm inline-block shadow-[0_0_8px_rgba(244,63,94,0.5)]" style={{ background: 'linear-gradient(135deg,#f43f5e,#ff8a50)' }} />
                 Fraud
               </span>
-              <span className="flex items-center gap-1 text-slate-500">
-                <span className="w-2 h-2 rounded-sm inline-block" style={{ background: 'rgba(255,255,255,0.12)' }} />
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: 'rgba(255,255,255,0.1)' }} />
                 Normal
               </span>
             </div>
           </div>
-          {/* Multi-color gradient bar chart */}
-          <div className="flex items-end justify-between gap-1.5" style={{ height: 140 }}>
+          {/* Restricting bar width with justify-center to prevent giant massive blocks when only 1 item exists */}
+          <div className="flex items-end justify-center gap-3 h-32 relative z-10 w-full overflow-hidden">
             {dynamicOccData.map((bar, i) => {
               const colors = [
-                ['#f43f5e','#ff6b6b'], ['#f97316','#fbbf24'], ['#8b5cf6','#a78bfa'],
-                ['#06b6d4','#22d3ee'], ['#10b981','#34d399'], ['#3b82f6','#60a5fa'],
-                ['#ef4444','#f87171'], ['#ec4899','#f472b6']
+                ['#f5550f','#ff8a50'], ['#f43f5e','#fb7185'], ['#f97316','#fbbf24'],
+                ['#38bdf8','#7dd3fc'], ['#a855f7','#d8b4fe'], ['#10b981','#6ee7b7'],
+                ['#6366f1','#a5b4fc'], ['#64748b','#cbd5e1']
               ];
               const [c1, c2] = colors[i % colors.length];
               const total = bar.h1 + bar.h2 || 1;
               return (
-                <div key={bar.label} className="group flex flex-col items-center justify-end flex-1 h-full gap-0 cursor-pointer">
-                  <div className="relative w-full flex-1 flex items-end">
+                <div key={bar.label} className="group flex flex-col items-center justify-end flex-col h-full gap-0 cursor-pointer w-full max-w-[40px]">
+                  <div className="relative w-full flex-1 flex items-end justify-center">
                     {/* Background track */}
-                    <div className="absolute bottom-0 left-0 right-0 rounded-t-lg" style={{ height: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }} />
+                    <div className="absolute bottom-0 rounded-t-md w-full" style={{ height: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }} />
                     {/* Animated colored bar */}
                     <motion.div
-                      className="absolute bottom-0 left-0 right-0 rounded-t-lg"
+                      className="absolute bottom-0 rounded-t-md w-full"
                       initial={{ height: 0 }}
                       animate={{ height: `${Math.max(8, (total / 90) * 100)}%` }}
                       transition={{ delay: 0.1 + i * 0.08, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
                       style={{
                         background: `linear-gradient(180deg, ${c1} 0%, ${c2} 100%)`,
-                        boxShadow: `0 0 12px ${c1}66, 0 -2px 8px ${c1}44`
+                        boxShadow: `0 0 12px ${c1}40`
                       }}
                     />
                     {/* Fraud overlay segment */}
                     <motion.div
-                      className="absolute bottom-0 left-0 right-0 rounded-t-lg"
+                      className="absolute bottom-0 rounded-t-md w-full"
                       initial={{ height: 0 }}
                       animate={{ height: `${(bar.h1 / total) * Math.max(8, (total / 90) * 100)}%` }}
                       transition={{ delay: 0.2 + i * 0.08, duration: 0.8, ease: 'easeOut' }}
-                      style={{ background: 'rgba(244,63,94,0.35)', backdropFilter: 'blur(2px)' }}
+                      style={{ background: 'rgba(244,63,94,0.6)', backdropFilter: 'blur(2px)' }}
                     />
                     {/* Hover count badge */}
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded text-white"
-                        style={{ background: `${c1}`, boxShadow: `0 2px 8px ${c1}88` }}>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-20">
+                      <span className="text-[10px] font-black px-2 py-1 rounded-md text-white shadow-xl"
+                        style={{ background: `${c1}`, display: 'block' }}>
                         {bar.h1 > 0 ? Math.round(bar.h1) : 0}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[7px] font-bold text-slate-500 mt-1.5 text-center w-full leading-tight truncate px-0.5" title={bar.label}>
-                    {bar.label.length > 6 ? bar.label.slice(0, 6) + '.' : bar.label}
+                  <span className="text-[8px] font-black text-slate-500 mt-2 text-center w-full leading-tight truncate px-0.5 uppercase tracking-wider group-hover:text-slate-300 transition-colors" title={bar.label}>
+                    {bar.label.length > 5 ? bar.label.slice(0, 5) + '.' : bar.label}
                   </span>
                 </div>
               );
@@ -491,41 +492,42 @@ export default function Users() {
           </div>
         </div>
 
-        {/* Panel 2 — Channel Datastore (Pill-segment design) */}
-        <div className="rounded-2xl p-5 flex flex-col" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}>
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Identities — Channel Datastore</h3>
-          <p className="text-[9px] text-slate-600 mb-4">Distribution across acquisition channels</p>
-          <div className="flex flex-col gap-4 flex-1 justify-center">
+        {/* Panel 2 — Channel Datastore */}
+        <div className="rounded-2xl p-6 flex flex-col relative overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-[50px] opacity-20 pointer-events-none" style={{ background: '#f59e0b' }} />
+          <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Acquisition Channels</h3>
+          <p className="text-[9px] text-slate-500 mb-6 uppercase tracking-wider font-semibold">Datastore Distribution Matrix</p>
+          <div className="flex flex-col gap-4.5 flex-1 justify-center z-10">
             {dynamicChannelData.map((row, i) => {
               const channelColors = [
-                { bg: 'linear-gradient(90deg, #f43f5e, #fb923c)', glow: '#f43f5e', dot: '#f43f5e', track: 'rgba(244,63,94,0.1)' },
-                { bg: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', glow: '#8b5cf6', dot: '#8b5cf6', track: 'rgba(139,92,246,0.1)' },
-                { bg: 'linear-gradient(90deg, #06b6d4, #22d3ee)', glow: '#06b6d4', dot: '#06b6d4', track: 'rgba(6,182,212,0.1)' },
-                { bg: 'linear-gradient(90deg, #10b981, #34d399)', glow: '#10b981', dot: '#10b981', track: 'rgba(16,185,129,0.1)' },
+                { bg: 'linear-gradient(90deg, #f5550f, #ff8a50)', glow: '#f5550f', dot: '#f5550f', track: 'rgba(245,85,15,0.08)' },
+                { bg: 'linear-gradient(90deg, #f97316, #fbbf24)', glow: '#f97316', dot: '#f97316', track: 'rgba(249,115,22,0.08)' },
+                { bg: 'linear-gradient(90deg, #6366f1, #8b5cf6)', glow: '#6366f1', dot: '#6366f1', track: 'rgba(99,102,241,0.08)' },
+                { bg: 'linear-gradient(90deg, #0ea5e9, #38bdf8)', glow: '#0ea5e9', dot: '#0ea5e9', track: 'rgba(14,165,233,0.08)' },
               ];
               const clr = channelColors[i % channelColors.length];
               const total = dynamicChannelData.reduce((a, c) => a + Math.max(c.val, 0), 0) || 1;
               const pctLabel = total > 0 ? ((row.val / total) * 100).toFixed(0) : '0';
               return (
-                <div key={row.label}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: 'var(--text-main)' }}>
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: clr.dot, boxShadow: `0 0 6px ${clr.dot}` }} />
+                <div key={row.label} className="group">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-300">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0 group-hover:scale-150 transition-transform" style={{ background: clr.dot, boxShadow: `0 0 6px ${clr.dot}` }} />
                       {row.label}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-500">{pctLabel}%</span>
-                      <span className="text-xs font-black" style={{ color: clr.dot }}>{row.val}</span>
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded">{pctLabel}%</span>
+                      <span className="text-xs font-black min-w-[20px] text-right" style={{ color: clr.dot }}>{row.val}</span>
                     </div>
                   </div>
                   {/* Segmented pill bar */}
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: clr.track, border: `1px solid ${clr.dot}20` }}>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: clr.track, border: `1px solid ${clr.dot}15` }}>
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${Math.max(4, row.pct)}%` }}
+                      animate={{ width: `${Math.max(2, row.pct)}%` }}
                       transition={{ delay: 0.15 + i * 0.12, duration: 1, ease: [0.34, 1.56, 0.64, 1] }}
                       className="h-full rounded-full"
-                      style={{ background: clr.bg, boxShadow: `0 0 8px ${clr.glow}88` }}
+                      style={{ background: clr.bg, boxShadow: `0 0 8px ${clr.glow}40` }}
                     />
                   </div>
                 </div>
@@ -534,34 +536,38 @@ export default function Users() {
           </div>
         </div>
 
-        {/* Panel 3 — Identity Risk (Stacked radial rings) */}
-        <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}>
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Identity Risk Breakdown</h3>
-          <div className="flex items-center gap-4">
-            <DonutChart riskItems={dynamicRiskData} />
-            <div className="flex flex-col gap-3 flex-1">
+        {/* Panel 3 — Identity Risk Breakdown */}
+        <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
+          <div className="absolute top-10 right-10 w-24 h-24 rounded-full blur-[40px] opacity-20 pointer-events-none" style={{ background: '#10b981' }} />
+          <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6">Identity Risk Breakdown</h3>
+          <div className="flex items-center gap-6 z-10 w-full">
+            <div className="shrink-0 flex items-center justify-center relative">
+               <DonutChart riskItems={dynamicRiskData} />
+            </div>
+            <div className="flex flex-col gap-3.5 flex-1 relative z-10">
               {dynamicRiskData.map((r, i) => {
                 const total = dynamicRiskData.reduce((a, b) => a + b.val, 0) || 1;
                 const pct = ((r.val / total) * 100).toFixed(0);
                 return (
-                  <div key={r.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: r.color }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: r.color, boxShadow: `0 0 5px ${r.color}` }} />
+                  <div key={r.label} className="group">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-300">
+                        <span className="w-2 h-2 rounded-sm" style={{ background: r.color, boxShadow: `0 0 6px ${r.color}60` }} />
                         {r.label}
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-slate-500 font-semibold">{pct}%</span>
-                        <span className="text-xs font-black" style={{ color: 'var(--text-main)' }}>{r.val}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 font-bold bg-slate-800/50 px-1.5 py-0.5 rounded">{pct}%</span>
+                        <span className="text-xs font-black min-w-[16px] text-right" style={{ color: 'var(--text-main)' }}>{r.val}</span>
                       </div>
                     </div>
-                    <div className="h-1 rounded-full overflow-hidden" style={{ background: `${r.color}18` }}>
+                    {/* Thinner, elegant track */}
+                    <div className="h-1 rounded-full overflow-hidden" style={{ background: `${r.color}15` }}>
                       <motion.div
-                        className="h-full rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ delay: 0.3 + i * 0.1, duration: 0.9, ease: 'easeOut' }}
-                        style={{ background: r.color, boxShadow: `0 0 6px ${r.color}88` }}
+                         className="h-full rounded-full"
+                         initial={{ width: 0 }}
+                         animate={{ width: `${pct}%` }}
+                         transition={{ delay: 0.3 + i * 0.1, duration: 0.9, ease: 'easeOut' }}
+                         style={{ background: r.color, boxShadow: `0 0 6px ${r.color}50` }}
                       />
                     </div>
                   </div>
@@ -824,12 +830,12 @@ export default function Users() {
       {/* ── Add User Modal ── */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/70">
+          <div className="fixed inset-0 z-50 flex flex-col items-center p-4 sm:py-10 sm:px-4 backdrop-blur-md bg-black/70 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl rounded-2xl overflow-hidden relative"
+              className="w-full max-w-2xl rounded-2xl overflow-hidden relative my-auto shrink-0"
               style={{
                 background: 'linear-gradient(145deg, rgba(30,30,35,0.95), rgba(15,15,20,0.95))',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -1069,12 +1075,12 @@ export default function Users() {
       {/* ── View User Details Modal ── */}
       <AnimatePresence>
         {viewingUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/70">
+          <div className="fixed inset-0 z-50 flex flex-col items-center p-4 sm:py-10 sm:px-4 backdrop-blur-md bg-black/70 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg rounded-2xl overflow-hidden relative"
+              className="w-full max-w-lg rounded-2xl overflow-hidden relative my-auto shrink-0"
               style={{
                 background: 'linear-gradient(145deg, rgba(30,30,35,0.95), rgba(15,15,20,0.95))',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -1170,10 +1176,10 @@ export default function Users() {
       {/* ── Training Model Modal ── */}
       <AnimatePresence>
         {isTraining && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-black/80">
+          <div className="fixed inset-0 z-[100] flex flex-col items-center p-4 sm:py-10 sm:px-4 backdrop-blur-md bg-black/80 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-              className="w-full max-w-sm rounded-3xl overflow-hidden relative p-8 flex flex-col items-center justify-center text-center"
+              className="w-full max-w-sm rounded-3xl overflow-hidden relative p-8 flex flex-col items-center justify-center text-center my-auto shrink-0"
               style={{
                 background: 'linear-gradient(145deg, rgba(30,30,35,0.95), rgba(15,15,20,0.95))',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -1243,12 +1249,12 @@ export default function Users() {
       {/* ── Full Customer Record Modal ── */}
       <AnimatePresence>
         {showFullModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/80 overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex flex-col items-center p-4 sm:py-10 sm:px-4 backdrop-blur-md bg-black/80 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-3xl rounded-2xl overflow-hidden relative my-4"
+              className="w-full max-w-3xl rounded-2xl overflow-hidden relative my-auto shrink-0"
               style={{ background: 'linear-gradient(145deg,rgba(30,30,35,0.97),rgba(15,15,20,0.97))', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 80px rgba(245,85,15,0.2)' }}
             >
               <div className="absolute top-0 inset-x-0 h-[1px]" style={{ background: 'linear-gradient(90deg,transparent,rgba(245,85,15,0.6),transparent)' }} />

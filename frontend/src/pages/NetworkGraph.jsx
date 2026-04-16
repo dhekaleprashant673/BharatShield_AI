@@ -173,7 +173,7 @@ const NetworkGraph = () => {
         <motion.div initial={{ opacity: 0, x: -25 }} animate={{ opacity: 1, x: 0 }}>
           <h1 className="text-3xl font-black text-[color:var(--text-main)] flex items-center gap-3">
              <Network className="w-8 h-8 text-orange-500" />
-             BharatShield <span className="text-orange-500">Fraud Web</span>
+             BharatShield <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(90deg, #f5550f, #ff8a50)' }}>Fraud Web</span>
           </h1>
           <p className="text-[color:var(--text-muted)] mt-1 font-bold uppercase tracking-wider text-[10px]">
              Multi-dimensional Fraud Vector Mapping & Discovery

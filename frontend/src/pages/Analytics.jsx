@@ -506,7 +506,7 @@ export default function Analytics() {
           </div>
           <h1 className="text-4xl font-black tracking-tight text-[color:var(--text-main)]">
             Fraud{' '}
-            <span className="text-transparent bg-clip-text" style={{ backgroundImage:'linear-gradient(90deg,#06b6d4,#f5550f)' }}>
+            <span className="text-transparent bg-clip-text" style={{ backgroundImage:'linear-gradient(90deg,#f5550f,#ff8a50)' }}>
               Analytics
             </span>
           </h1>

@@ -13,6 +13,7 @@ const NOTIFS = [
 
 export default function DashboardLayout() {
   const [time, setTime] = useState('');
+  const [dateStr, setDateStr] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const [isLightMode, setIsLightMode] = useState(false);
@@ -34,6 +35,8 @@ export default function DashboardLayout() {
     const tick = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      const parts = now.toDateString().split(' ');
+      setDateStr(`${parts[0]}, ${parts[2]} ${parts[1]} ${parts[3]}`);
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -210,7 +213,7 @@ export default function DashboardLayout() {
               {time}
             </div>
             <div className="text-xs text-[color:var(--text-muted)] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-card)' }}>
-              Tue, 24 Mar 2026
+              {dateStr}
             </div>
           </div>
 

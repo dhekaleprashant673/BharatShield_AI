@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, AlertTriangle, Menu, X, ShieldAlert, LogOut, Settings, BrainCircuit, BarChart2, User, Scan, Network } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, AlertTriangle, Menu, X, ShieldAlert, LogOut, Settings, BrainCircuit, BarChart2, User, Scan, Network, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -83,6 +83,7 @@ export default function Sidebar() {
     { name: 'Forensic Scan', href: '/forensic', icon: Scan },
     { name: 'Network Graph', href: '/network-graph', icon: Network },
     { name: 'Users', href: '/users', icon: User },
+    { name: 'Smart Underwriting', href: '/underwriting', icon: Bot },
     { name: 'FraudLens AI', href: '/fraudlens', icon: BrainCircuit },
   ];
 
@@ -175,8 +176,8 @@ export default function Sidebar() {
           {/* AI Engine Status Widget */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="mt-8 rounded-2xl p-5 relative overflow-hidden cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, rgba(245,85,15,0.12) 0%, rgba(255,138,80,0.08) 100%)', border: '1px solid rgba(245,85,15,0.15)' }}
+            className="mt-8 mb-4 shrink-0 rounded-2xl p-5 relative overflow-hidden cursor-pointer flex flex-col justify-center"
+            style={{ background: 'linear-gradient(135deg, rgba(245,85,15,0.12) 0%, rgba(255,138,80,0.08) 100%)', border: '1px solid rgba(245,85,15,0.15)', minHeight: '120px' }}
           >
             <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-3xl" style={{ background: 'rgba(245,85,15,0.3)' }} />
             <BrainCircuit className="w-5 h-5 text-orange-500 mb-3" />

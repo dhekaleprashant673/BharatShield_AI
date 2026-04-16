@@ -187,7 +187,7 @@ export default function Dashboard() {
           </div>
           <h1 className="text-4xl font-black tracking-tight text-[color:var(--text-main)]">
             Security Intelligence{' '}
-            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(90deg, #f5550f, #ff8a50, #ff5252)' }}>Center</span>
+            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(90deg, #f5550f, #ff8a50)' }}>Center</span>
           </h1>
           <p className="text-[color:var(--text-muted)] mt-1.5 font-medium">Real-time fraud analytics, anomaly detection and threat response</p>
         </motion.div>
